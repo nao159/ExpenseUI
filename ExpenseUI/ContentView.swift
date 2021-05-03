@@ -7,17 +7,33 @@
 
 import SwiftUI
 
-struct ExpenseItem: Identifiable {
+struct ExpenseItem: Identifiable, Codable {
     let name: String
-    let id = UUID()
+    private(set) var id = UUID()
     let type: String
     let amount: Int
 }
 
 class Expenses: ObservableObject {
-    @Published var items = [ExpenseItem]()
+    @Published var items = [ExpenseItem]() {
+        didSet {
+            let encoder = JSONEncoder()
+            if let encoded = try? encoder.encode(items) {
+                UserDefaults.standard.set(encoded, forKey: "items")
+            }
+        }
+    }
+    init() {
+        if let items = UserDefaults.standard.data(forKey: "items") {
+            let decoder = JSONDecoder()
+            if let decoded = try? decoder.decode([ExpenseItem].self, from: items) {
+                self.items = decoded
+                return
+            }
+        }
+        self.items = []
+    }
 }
-
 struct ContentView: View {
     
     @ObservedObject var expenses = Expenses()
@@ -28,7 +44,11 @@ struct ContentView: View {
         NavigationView {
             List {
                 ForEach(expenses.items) { item in
-                    Text("\(item.name)")
+                    VStack(alignment: .leading) {
+                        Text("\(item.name)")
+                        Text("Type: \(item.type)")
+                        Text("Count: \(item.amount)")
+                    }
                 }
                 .onDelete(perform: removeItems)
             }
