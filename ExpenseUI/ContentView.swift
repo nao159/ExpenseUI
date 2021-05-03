@@ -12,6 +12,18 @@ struct ExpenseItem: Identifiable, Codable {
     private(set) var id = UUID()
     let type: String
     let amount: Int
+    var colorAmount: Color {
+        switch amount {
+        case 0..<5: do {
+            return .black
+        }
+        case 5..<10: do {
+            return .red
+        }
+        default:
+            return .yellow
+        }
+    }
 }
 
 class Expenses: ObservableObject {
@@ -48,9 +60,13 @@ struct ContentView: View {
                         Text("\(item.name)")
                         Text("Type: \(item.type)")
                         Text("Count: \(item.amount)")
+                            .foregroundColor(item.colorAmount)
                     }
                 }
                 .onDelete(perform: removeItems)
+            }
+            .toolbar {
+                EditButton()
             }
             .navigationBarTitle("ExpenseUI")
             .navigationBarItems(leading:
